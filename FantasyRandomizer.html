@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>TTownWarriors Generator - Rohan Thomare </title>
+    
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/JSXTransformer.js"></script>
+  </head>
+  <script type="text/jsx">
+    var Table = React.createClass ({
+    getInitialState: function() {
+      data = this.props.data
+      return {data}
+    },
+    render: function() {
+      var headerColumns = this.props.headers.map(function(header, index) {
+        return (
+          <th>{header}</th>
+        );
+      });
+
+      var rows = this.state.data.map(function(row, rowIndex) {
+        var rowElement = row.map(function(cell, columnIndex) {
+          if (columnIndex == 0) {
+            return (
+              <th><b>{cell}</b></th>
+            ); 
+          } else {
+            return (
+              <td>{cell}</td>
+            );
+          }
+        });
+        return (
+          <tr>{rowElement}</tr>
+        );
+      });
+
+      var bodyElement = (
+        <tbody>
+          {rows}
+        </tbody>
+      );
+
+      var headerElement = (
+        <thead>
+          <tr>
+            {headerColumns}
+          </tr>
+        </thead>
+      );
+
+      return (
+        <table className="table">
+          {headerElement}
+          {bodyElement}
+        </table>
+      );
+    }
+   });
+  </script>
+
+  <script type="text/jsx">
+    var divArray = [];
+    var peopleArray = [];
+
+    var divisionInitialData = [
+      {'Division':'Divison1'},
+      {'Division':'Divison2'},
+      {'Division':'Divison3'},
+    ];
+
+    var peopleInitialData = [
+      {'Name':'Person1'},
+      {'Name':'Person2'},
+      {'Name':'Person3'},
+      {'Name':'Person4'},
+      {'Name':'Person5'},
+      {'Name':'Person6'},
+      {'Name':'Person7'},
+      {'Name':'Person8'},
+      {'Name':'Person9'},
+      {'Name':'Person10'},
+      {'Name':'Person11'},
+      {'Name':'Person12'},
+    ];
+
+    var divisionUpdate = function(divisionsData){
+      divArray = []
+      divisionsData.map(function(dictionary, index) {
+        divArray.push(dictionary['Division']);
+      });
+    }
+    divisionUpdate(divisionInitialData);
+
+
+    var peopleUpdate = function(peoplesData){
+      peopleArray = []
+      peoplesData.map(function(dictionary, index) {
+        peopleArray.push(dictionary['Name']);
+      });
+    }
+    peopleUpdate(peopleInitialData);
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min)) + min;
+    }
+
+    function pp(object){
+      alert(JSON.stringify(object));
+    }
+    var createDivisions = function(divisions, people) {
+      //initlize the divisions hash with the correct information
+      var divisionMap = {}
+      var numDivisions = divisions.length
+      var MAX_PEOPLE_IN_DIVISION = Math.floor(people.length/divisions.length);
+      divisions.map(function(divisionName,index) {
+        divisionMap[divisionName] = [];
+      });
+
+
+      //initalize peopleLeft array
+      var peopleLeft = people.map(function(person, index){
+        return person;
+      });
+
+      var tries = 0;
+      while(peopleLeft.length > 0) {
+        tries += 1;
+
+        if (tries > numDivisions * 4) {
+          MAX_PEOPLE_IN_DIVISION += 1;
+        }
+        var person = peopleLeft[0];
+        var randomDivIndex = divisions[getRandomInt(0,100) % numDivisions];
+        var division = divisionMap[randomDivIndex];
+        
+        if (division.length >= MAX_PEOPLE_IN_DIVISION){
+          continue;
+        }
+
+        tries = 0;
+        division.push(person);
+        peopleLeft.shift();
+      }
+      return divisionMap;
+    }
+    
+    var digestDivisions = function(divisions){
+      var tableHeaders = ['Divisions'];
+      var tableRows = [];
+      for (division in divisions) {
+        players = divisions[division];
+        tableHeaders.push(division);
+        players.map(function(player,index) {
+          if (index >= tableRows.length) {
+            tableRows.push([(index+1).toString()]);
+          }
+          tableRows[index].push(player);
+        })
+      }
+      return {
+        'headers': tableHeaders,
+        'rows' : tableRows,
+      }
+    }
+
+    var updateTable = function() {
+      React.unmountComponentAtNode(document.getElementById('divisionsTable'));
+      divisionMap = createDivisions(divArray,peopleArray);
+      divsionTable = digestDivisions(divisionMap);
+      React.render(
+        <Table headers={divsionTable.headers} data={divsionTable.rows}/>,
+        document.getElementById('divisionsTable')
+      );
+    }
+
+    updateTable();   
+  </script>
+
+  <script type="text/jsx">
+    //people array
+
+    var createDraftOrder = function(people) {
+      var draftOrder = [];
+      //initalize peopleLeft array
+      var peopleLeft = people.map(function(person, index){
+        return person;
+      });
+
+      while(peopleLeft.length > 0) {
+        var randomPersonIndex = getRandomInt(0,100) % peopleLeft.length;
+        var person = peopleLeft[randomPersonIndex];
+        draftOrder.push(person);
+        peopleLeft.splice(randomPersonIndex,1);
+      }
+
+      return draftOrder;
+    }
+
+    var digestDraft = function(order) {
+      var tableHeaders = ['#','Name'];
+      var tableRows = [];
+
+      order.map(function(person, index) {
+        tableRows.push([(index+1).toString(), person]);
+      });
+
+      return {
+        'headers': tableHeaders,
+        'rows' : tableRows,
+      }
+    }
+
+    var updateDraft = function() {
+      React.unmountComponentAtNode(document.getElementById('draftTable'));
+      draftOrder = createDraftOrder(peopleArray);
+      draftTable = digestDraft(draftOrder);
+      React.render(
+        <Table headers={draftTable.headers} data={draftTable.rows}/>,
+        document.getElementById('draftTable')
+      );
+    }
+
+    updateDraft();
+  </script>
+
+
+
+  <script type="text/jsx">
+   var ExpandingListItem = React.createClass ({
+    getInitialState: function() {
+      if (this.props.data) {
+        return {'data': this.props.data}
+      }
+      return {'data': {}}
+    },
+    textStateChange: function(key, value){
+      currentState = this.state.data;
+      value ? (currentState[key] = value) : console.log("Skipping empty feild placement in state");
+      this.setState({'data': currentState});
+    },
+    update: function(key, value) {
+      //send data back to parent
+      this.textStateChange(key,value);
+      this.props.update(this.props.index, currentState);
+    },
+    render: function() {
+      var expandingListItem = this;
+      var inputs = this.props.dataKeys.map( function(key, index) {
+        var onBlurCallBack = function(e) {
+          expandingListItem.update(key, e.target.value);
+        };
+        var updateCallBack = function(e) {
+          expandingListItem.textStateChange(key, e.target.value);
+        };
+        return (
+          <input  type="text"
+                  onChange={updateCallBack}
+                  onBlur={onBlurCallBack} 
+                  className="form-control"
+                  placeholder={'Enter ' + key + ' Here'} 
+                  value={expandingListItem.state.data[key]}/>
+        );
+      });
+      //<div className="panel-heading">Panel heading without title</div>
+      //  <div className="panel panel-default">
+      return (
+          <div className="panel-body">
+            {inputs}
+          </div>
+      );
+    }
+   });
+
+   var ExpandingList = React.createClass ({
+        getInitialState: function (){
+          items = [];
+          if (this.props.data && this.props.data.length > 0) {
+            this.props.data.map(function(item, index) {
+              items.push(item);
+            });
+          } else {
+            items.push({});
+          }
+          return {'items': items};
+        },
+        addItem: function() {
+          //grab state object to be reassigned
+          currentItems = this.state.items;
+          currentItems.push({});
+          this.setState({'items':currentItems});
+          this.props.update(currentItems);
+        },
+        updateItem: function(index, data) {
+          currentItems = this.state.items;
+          currentItems[index] = data;
+          this.setState({'items':currentItems});
+          this.props.update(currentItems);
+        },
+        removeItem: function() {
+          currentItems = this.state.items;
+          currentItems.pop();
+          this.setState({'items':currentItems});
+          this.props.update(currentItems);
+        },
+        render: function() {
+          //access variable of the React instance of TabList
+          var list = this;
+            
+          //walk through tabs and generate a tab based on if it is active
+
+          var itemNodes = list.state.items.map(function(item, index) {
+            return (
+              <ExpandingListItem  key={index} 
+                                  index={index} 
+                                  data={item}
+                                  dataKeys={list.props.dataKeys}
+                                  update={list.updateItem}/>
+            );
+          });
+
+          if (list.state.items.length > 1) {
+            var controls = (
+              <div className="btn-group" role="group" aria-label="First group">
+                <button onClick={list.addItem} type="button" className="btn btn-default">
+                  <span className="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                </button>
+                <button type="button" onClick={list.removeItem} className="btn btn-default">
+                  <span className="glyphicon glyphicon-minus" aria-hidden="true"></span>
+                </button>
+              </div>
+            );
+          } else {
+            var controls = (
+              <div className="btn-group" role="group" aria-label="First group">
+                <button onClick={list.addItem} type="button" className="btn btn-default">
+                  <span className="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                </button>
+              </div>
+            );
+          }
+
+          return (
+            <div className="nav nav-tabs">
+              {itemNodes}
+              {controls}
+            </div>
+          );
+        }
+      });
+
+      React.render(
+        <ExpandingList  data={divisionInitialData} 
+                        dataKeys={['Division']} 
+                        update={divisionUpdate}/>,
+        document.getElementById('division')
+      );
+
+      React.render(
+        <ExpandingList  data={peopleInitialData} 
+                        dataKeys={['Name']} 
+                        update={peopleUpdate}/>,
+        document.getElementById('people')
+      );
+
+
+      var ClickButton = React.createClass({
+        render: function(){
+          return (
+            <button type="button" onClick={this.props.click} className="btn btn-success">
+              {this.props.children}
+            </button>
+          );
+        }
+      });
+
+      React.render(
+        <ClickButton click={updateTable}>
+          Generate
+        </ClickButton>,
+        document.getElementById('generate')
+      );
+
+      React.render(
+        <ClickButton click={updateDraft}>
+          Reorder
+        </ClickButton>,
+        document.getElementById('reorder')
+      );
+
+  </script>
+  <body style="margin-left: 10px;">
+    <h2>TTownWarriors Fantasy Football Generator</h2>
+    <h6>Created by Rohan Thomare on 9/6/15. Copyright © 2015</h6>
+    <div class="row">
+      <div class="col-xs-6">
+        <span id='divisionsTable'></span>
+        <div id="generate"></div>
+      </div>
+      <div class="col-xs-6">
+        <span id='draftTable'></span>
+        <div id="reorder"></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xs-6">
+        <h3>Edit Divisions</h3>
+        <div id="division"></div>
+      </div>
+      <div class="col-xs-6">
+        <h3>Edit People</h3>
+        <div id="people"></div>
+      </div>
+    </div>
+  </body>
